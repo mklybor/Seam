@@ -30,6 +30,7 @@ public typealias ConflictResolutionInfo = (serverValues: [String: AnyObject], lo
 public typealias ConflictResolutionReturnedInfo = (newValues: [String: AnyObject], pendingLocallyChangedProperties: [String])
 public typealias ConflictResolutionBlock = ((_ conflictResolutionInfo: ConflictResolutionInfo) -> ConflictResolutionReturnedInfo)
 
+@available(iOS 10.0, *)
 public class Store: NSIncrementalStore {
   
   var currentZone: Zone!

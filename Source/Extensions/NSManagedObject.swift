@@ -26,6 +26,7 @@ import Foundation
 import CoreData
 import CloudKit
 
+@available(iOS 10.0, *)
 extension NSManagedObject {
 
   var uniqueID: String {

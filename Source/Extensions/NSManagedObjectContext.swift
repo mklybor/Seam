@@ -29,6 +29,7 @@ import CloudKit
 let ContextDoesNotAllowChangeRecording = "ContextDoesNotAllowChangeRecording"
 let UniqueIDsForInsertedObjectsKey = "UniqueIDsForInsertedObjectsKey"
 
+@available(iOS 10.0, *)
 extension NSManagedObjectContext {
   var doesNotAllowChangeRecording: Bool {
     get {

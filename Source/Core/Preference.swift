@@ -84,7 +84,8 @@ class Preference: NSManagedObject {
   // MARK: Manager
   
   /// Preference.Manager is a class used to manage preferences by the store.
-  class Manager {
+    @available(iOS 10.0, *)
+    class Manager {
     let context: NSManagedObjectContext!
     
     /**

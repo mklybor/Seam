@@ -25,6 +25,7 @@
 import Foundation
 import CloudKit
 
+@available(iOS 10.0, *)
 class Zone {
   var zone: CKRecordZone!
   var subscription: CKSubscription!
@@ -36,7 +37,7 @@ class Zone {
     let subscriptionName = zone.zoneID.zoneName + "Subscription"
     subscription = CKRecordZoneSubscription(zoneID: zone.zoneID)
     subscription = CKRecordZoneSubscription(zoneID: zone.zoneID, subscriptionID: subscriptionName)
-    let subscriptionNotificationInfo = CKNotificationInfo()
+    let subscriptionNotificationInfo = CKSubscription.NotificationInfo()
     subscriptionNotificationInfo.alertBody = ""
     subscriptionNotificationInfo.shouldSendContentAvailable = true
     subscription.notificationInfo = subscriptionNotificationInfo
@@ -47,7 +48,7 @@ class Zone {
     zone = CKRecordZone(zoneName: zoneName)
     let subscriptionName = zone.zoneID.zoneName + "Subscription"
     subscription = CKRecordZoneSubscription(zoneID: zone.zoneID, subscriptionID: subscriptionName)
-    let subscriptionNotificationInfo = CKNotificationInfo()
+    let subscriptionNotificationInfo = CKSubscription.NotificationInfo()
     subscriptionNotificationInfo.alertBody = ""
     subscriptionNotificationInfo.shouldSendContentAvailable = true
     subscription.notificationInfo = subscriptionNotificationInfo

@@ -29,6 +29,7 @@ import CoreData
 public typealias Changes = (insertedOrUpdatedObjectsInfo: [(uniqueID: String, entityName: String)], deletedObjectsInfo: [(uniqueID: String, entityName: String)])
 typealias CompletionBlock = ((_ saveNotification: NSNotification? ,_ syncError: Error?) -> ())
 
+@available(iOS 10.0, *)
 class Sync: Operation {
   
   // MARK: Error
@@ -171,7 +172,7 @@ class Sync: Operation {
     if let metadata = encodedMetadata {
       record = CKRecord.recordWithEncodedData(data: metadata)
     } else {
-      let recordID = CKRecordID(recordName: uniqueID, zoneID: recordZoneID)
+        let recordID = CKRecord.ID(recordName: uniqueID, zoneID: recordZoneID)
       record = CKRecord(recordType: entity.name!, recordID: recordID)
     }
     propertyValuesDictionary.forEach { (key, value) in
@@ -181,8 +182,8 @@ class Sync: Operation {
       }
       if let referenceManagedObject = value as? NSManagedObject {
         let referenceUniqueID = store.referenceObject(for: referenceManagedObject.objectID) as! String
-        let referenceRecordID = CKRecordID(recordName: referenceUniqueID, zoneID: recordZoneID)
-        let reference = CKReference(recordID: referenceRecordID, action: .deleteSelf)
+        let referenceRecordID = CKRecord.ID(recordName: referenceUniqueID, zoneID: recordZoneID)
+        let reference = CKRecord.Reference(recordID: referenceRecordID, action: .deleteSelf)
         record?.setObject(reference, forKey: key)
       } else {
         record?.setValue(value, forKey: key)
@@ -191,16 +192,16 @@ class Sync: Operation {
     return record!
   }
   
-  func localChanges() throws -> (insertedOrUpdatedRecordsAndChanges: [(record: CKRecord, change: Change)], deletedCKRecordIDs: [CKRecordID]) {
+    func localChanges() throws -> (insertedOrUpdatedRecordsAndChanges: [(record: CKRecord, change: Change)], deletedCKRecordIDs: [CKRecord.ID]) {
     var insertedOrUpdatedRecordsAndChanges = [(record: CKRecord, change: Change)]()
-    var deletedCKRecordIDs = [CKRecordID]()
+    var deletedCKRecordIDs = [CKRecord.ID]()
     guard let localChanges = try changeManager.all() else {
       return (insertedOrUpdatedRecordsAndChanges: insertedOrUpdatedRecordsAndChanges, deletedCKRecordIDs: deletedCKRecordIDs)
     }
     try localChanges.forEach { change in
       if change.isDeletedType {
         let recordZoneID = zone.zone.zoneID
-        let recordID = CKRecordID(recordName: change.uniqueID, zoneID: recordZoneID)
+        let recordID = CKRecord.ID(recordName: change.uniqueID, zoneID: recordZoneID)
         deletedCKRecordIDs.append(recordID)
       } else {
         let entity = persistentStoreCoordinator.managedObjectModel.entitiesByName[change.entityName!]!
@@ -226,7 +227,7 @@ class Sync: Operation {
   func applyLocalChanges() throws {
     let changes = try localChanges()
     var conflictedRecords = [CKRecord]()
-    var insertedOrUpdatedCKRecordsAndChangesWithIDs = [CKRecordID: (record: CKRecord, change: Change)]()
+    var insertedOrUpdatedCKRecordsAndChangesWithIDs = [CKRecord.ID: (record: CKRecord, change: Change)]()
     changes.insertedOrUpdatedRecordsAndChanges.forEach {
       insertedOrUpdatedCKRecordsAndChangesWithIDs[$0.record.recordID] = $0
     }
@@ -263,11 +264,11 @@ class Sync: Operation {
   
   func resolveConflicts(conflictedRecordsWithChanges: [(record: CKRecord, change: Change)]) throws {
     let recordIDs = conflictedRecordsWithChanges.map { $0.record.recordID }
-    var conflictedRecordsByRecordIDsAndChanges = [CKRecordID: (record: CKRecord, change: Change)]()
+    var conflictedRecordsByRecordIDsAndChanges = [CKRecord.ID: (record: CKRecord, change: Change)]()
     conflictedRecordsWithChanges.forEach { (record, change) in
       conflictedRecordsByRecordIDsAndChanges[record.recordID] = (record: record, change: change)
     }
-    var fetchedRecordsByRecordIDs: [CKRecordID: CKRecord]?
+    var fetchedRecordsByRecordIDs: [CKRecord.ID: CKRecord]?
     let fetchRecordsOperation = CKFetchRecordsOperation(recordIDs: recordIDs)
     fetchRecordsOperation.fetchRecordsCompletionBlock = { (recordsByRecordIDs, error) in
       guard error == nil else {
@@ -329,7 +330,7 @@ class Sync: Operation {
     let propertyKeys = Array(entity.attributesByName.keys) + toOneRelationshipKeys
     var valueDictionary = record.dictionaryWithValues(forKeys: propertyKeys)
     try toOneRelationshipKeys.forEach { key in
-      guard let reference = valueDictionary[key] as? CKReference else {
+        guard let reference = valueDictionary[key] as? CKRecord.Reference else {
         return
       }
       let uniqueReferenceID = reference.recordID.recordName
@@ -367,7 +368,7 @@ class Sync: Operation {
         guard let referenceDestinationEntity = entity.relationshipsByName[name]!.destinationEntity else {
           return
         }
-        let relationshipUniqueID = (reference as! CKReference).recordID.recordName
+        let relationshipUniqueID = (reference as! CKRecord.Reference).recordID.recordName
         if let relationshipManagedObject = self.insertedObjectsWithUniqueIDs[relationshipUniqueID] {
           managedObject.setValue(relationshipManagedObject, forKey: name)
         } else if let relationshipBackingObjectID = try self.backingStoreContext.objectIDForBackingObjectForEntity(entityName: referenceDestinationEntity.name!, uniqueID: relationshipUniqueID) {
@@ -380,18 +381,18 @@ class Sync: Operation {
     }
   }
   
-  func serverChanges() -> (insertedOrUpdatedCKRecords: [CKRecord],deletedRecordIDs: [CKRecordID]) {
+    func serverChanges() -> (insertedOrUpdatedCKRecords: [CKRecord],deletedRecordIDs: [CKRecord.ID]) {
     let token = Token.sharedToken.rawToken()
     let recordZoneID = zone.zone.zoneID
     
     // Implement the new api
-    let options = CKFetchRecordZoneChangesOptions()
+        let options = CKFetchRecordZoneChangesOperation.ZoneOptions()
     options.previousServerChangeToken = token
     let fetchRecordChangesOperation = CKFetchRecordZoneChangesOperation(recordZoneIDs:
       [recordZoneID], optionsByRecordZoneID: [recordZoneID: options])
     
     var insertedOrUpdatedCKRecords: [CKRecord] = [CKRecord]()
-    var deletedCKRecordIDs: [CKRecordID] = [CKRecordID]()
+        var deletedCKRecordIDs: [CKRecord.ID] = [CKRecord.ID]()
 
     fetchRecordChangesOperation.recordZoneChangeTokensUpdatedBlock = { recordZoneID,changeToken,operationError in
       guard let changeToken = changeToken, operationError == nil else {

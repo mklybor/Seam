@@ -25,6 +25,7 @@
 import Foundation
 import CoreData
 
+@available(iOS 10.0, *)
 extension NSPersistentStoreCoordinator {
   var seamStore: Store? {
     var seamStore: Store?

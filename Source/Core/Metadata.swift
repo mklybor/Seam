@@ -65,7 +65,8 @@ class Metadata: NSManagedObject {
   }
   
   /// Metadata.Manager is a class used to manage metadata by the store.
-  class Manager {
+    @available(iOS 10.0, *)
+    class Manager {
     var context: NSManagedObjectContext!
     
     /**

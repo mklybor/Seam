@@ -132,7 +132,8 @@ class Change: NSManagedObject {
   
   // MARK: - Manager
   
-  class Manager {
+    @available(iOS 10.0, *)
+    class Manager {
     private var changeContext: NSManagedObjectContext!
     private var mainContext: NSManagedObjectContext?
     

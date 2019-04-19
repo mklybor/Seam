@@ -25,6 +25,7 @@
 import Foundation
 import CoreData
 
+@available(iOS 10.0, *)
 public let SeamStoreType = Store.type
 
 public let SMStoreDidStartSyncingNotification = "Seam.SMStoreDidStartSyncingNotification"
